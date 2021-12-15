@@ -37,7 +37,7 @@ using namespace std;
 // Time to suspend initialization process before rebooting sensor
 #define TIMEOUT_MS                  36000000  
 #define threshold                   20
-#define count                       0
+#define check                       0
 #define SUSPEND_AND_BOOT_TIME       3600000   // 1 hour
 #define MAGNET_SUSPEND_TIME         30        // in seconds
 #define SLEEP_PERIOD                20000     // 20 secs
@@ -815,10 +815,10 @@ int main(void)
         {
           watchdog.kick();
           ////////////////expected start/////////////////////////////////////
-          if(count<threshold)
+          if(check<threshold)
           {
            // start counter for threshold purpose//
-           ++count;
+           ++check;
            //store sample in variable//
            board.getMeasurement(sensor_value);
            /* prevent suspending */
@@ -833,7 +833,7 @@ int main(void)
           {
            NVIC_SystemReset();
            memset(sensor_value, 0x00, sizeof(uint32_t));
-           count=0;
+           check=0;
           }		
           ///////////////////expected end/////////////////////////////////
        watchdog.kick();
