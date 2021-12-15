@@ -21,6 +21,7 @@
 #include "spiioBoard/low_power.h"
 #include "spiioClient/SpiioClient.h"
 #include "spiioNetwork/spiioNetwork.h"
+#include "mbed.h"
 #ifdef SPIIO_SENSOR_SPIFLASH_FT25LX04
 #include "spiioBoard/SPIFBlockDevice.h"
 #endif
