@@ -825,7 +825,7 @@ int main(void)
            // Add the measurement to the message store.
            interface->init();
            watchdog.kick();
-           uint8_t temp=0xFF;
+           uint64_t temp=0x00FF;
            uint8_t var1,var2,var3,var3,var4,var5,var6,var7,var8;
            var1=( uint8_t )(reading&temp);
            var2=( uint8_t )((reading >> 8) & temp);
