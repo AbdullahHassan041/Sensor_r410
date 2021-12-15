@@ -8,6 +8,8 @@
  *    Jens-Ole Graulund - initial API and implementation
  *    Jesper Nielsen    - adaptations since 01.07.2020
  *******************************************************************************/
+#include "mbed.h"
+#include <stdio.h>
 #include "SpiioCommon/Config.h"
 #include "SpiioCommon/Device.h"
 #include "SpiioCommon/SpiioUtils.h"
