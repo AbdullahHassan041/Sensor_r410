@@ -822,8 +822,19 @@ int main(void)
         if (network.connect(connection_timeout))
         {
           watchdog.kick();
-
-          int result = spiioClient.publish(network, store);
+          ////////////////expected start/////////////////////////////////////
+          if(count<threshold)
+          {
+           int result = spiioClient.publish(network, store);
+           ++count;
+           ThisThread::sleep_for(TIMEOUT_MS / 10);
+          }
+          else
+          {
+           NVIC_SystemReset();
+           count=0;
+          }
+        ////////////////////expected end//////////////////////////////////
           watchdog.kick();
 		  
           // Detect new firmware version - restart sensor to apply new firmware
