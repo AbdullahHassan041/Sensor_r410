@@ -828,13 +828,13 @@ int main(void)
            uint8_t temp=0xFF;
            uint8_t var1,var2,var3,var3,var4,var5,var6,var7,var8;
            var1=( uint8_t )(reading&temp);
-           var2=( uint8_t )(reading >> 8 & temp);
-           var3=( uint8_t )(reading >> 8 & temp);
-           var4=( uint8_t )(reading>> 8 & temp);
-           var5=( uint8_t )(reading>> 8 & temp);
-           var6=( uint8_t )(reading>> 8 & temp);
-           var7=( uint8_t )(reading>> 8 & temp);
-           var8=( uint8_t )(reading>> 8 & temp);
+           var2=( uint8_t )((reading >> 8) & temp);
+           var3=( uint8_t )((reading >> 8) & temp);
+           var4=( uint8_t )((reading>> 8) & temp);
+           var5=( uint8_t )((reading>> 8) & temp);
+           var6=( uint8_t )((reading>> 8) & temp);
+           var7=( uint8_t )((reading>> 8) & temp);
+           var8=( uint8_t )((reading>> 8) & temp);
            store.add(var1);//for sensor 1
            store.add(var2);//for sensor 2
            store.add(var3);//for sensor 3
