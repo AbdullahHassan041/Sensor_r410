@@ -29,15 +29,19 @@
 
 #include "mbed_trace.h"
 #define TRACE_GROUP "SPIIO"
-float moisture=0;
-float time=0;
-float light=0;
-float battery=0;
-float salinity=0;
-time_t currentTime;
-float airp=0;
+/////////////////////////expected start////////////////////////////////
+struct datapacket
+{
+  float   airp                :32;
+  time_t  currentTime         :64;
+  float   salinity            :32;
+  float   battery             :32;
+  float   light               :32;
+  float   temp                :32;
+  float   moisture            :32;
+};
+//////////////////////////expected end/////////////////////////////////////
 using namespace std;
-
 #define BOOTLOADER_ADDRESS (unsigned long)0x8000000
 
 // Time to suspend initialization process before rebooting sensor
@@ -831,31 +835,21 @@ int main(void)
            // Add the measurement to the message store.
            interface->init();
            watchdog.kick();
-           /*uint8_t temp=0xFF;
-           uint8_t var1,var2,var3,var3,var4,var5,var6,var7,var8;
-           var1=( uint8_t )(reading&temp);
-           var2=( uint8_t )(reading>>8&temp);
-           var3=( uint8_t )(reading>>8&temp);
-           var4=( uint8_t )(reading>>8&temp);
-           var5=( uint8_t )(reading>>8&temp);
-           var6=( uint8_t )(reading>>8&temp);
-           var7=( uint8_t )(reading>>8&temp);
-           var8=( uint8_t )(reading>>8&temp);
-           store.add(var1);//for sensor 1
-           store.add(var2);//for sensor 2
-           store.add(var3);//for sensor 3
-           store.add(var4);//for sensor 4
-           store.add(var5);//for sensor 5
-           store.add(var6);//for sensor 6
-           store.add(var7);//for sensor 7
-           store.add(var8);//for sensor 8*/
-           store.add(moisture);
-           store.add(temp);
-           store.add(light);
-           store.add(battery);
-           store.add(salinity);
-           store.add(currentTime);
-           store.add( airp);
+            struct datapacket information;
+            information.moisture=reading;
+            information.temp=reading;
+            information.light=reading;
+            information.battery=reading;
+            information.salinity=reading;
+            information.currentTime=reading;
+            information.airp=reading;
+           store.add(information.airp);                    //for sensor 1
+           store.add(information.currentTime);             //for sensor 2
+           store.add(information.salinity);                //for sensor 3
+           store.add(information.battery);                 //for sensor 4
+           store.add(information.light);                   //for sensor 5
+           store.add(information.temp);                    //for sensor 6
+           store.add(information.moisture);                //for sensor 7
            ThisThread::sleep_for(TIMEOUT_MS / 10);
           }
           else
