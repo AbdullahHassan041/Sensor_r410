@@ -8,8 +8,6 @@
  *    Jens-Ole Graulund - initial API and implementation
  *    Jesper Nielsen    - adaptations since 01.07.2020
  *******************************************************************************/
-#include "mbed.h"
-#include <stdio.h>
 #include "SpiioCommon/Config.h"
 #include "SpiioCommon/Device.h"
 #include "SpiioCommon/SpiioUtils.h"
@@ -36,7 +34,7 @@ using namespace std;
 #define BOOTLOADER_ADDRESS (unsigned long)0x8000000
 
 // Time to suspend initialization process before rebooting sensor
-#define TIMEOUT_MS                  36000000 
+#define TIMEOUT_MS                  36000000  
 #define threshold                   20
 #define count                       0
 #define SUSPEND_AND_BOOT_TIME       3600000   // 1 hour
@@ -794,6 +792,7 @@ int main(void)
     time_t ts_now = 0;
 
     char reading[64] = {0};
+    uint32_t sensor_value= 0;
 
     uint8_t sched_cnt = 0;
     uint8_t static rep_iter = sleep_schedule[sched_cnt][SCHED_ITEM_SIZE-1];
@@ -814,37 +813,34 @@ int main(void)
       if (network.connect(connection_timeout))
         {
           watchdog.kick();
-          ////////////////expected start/////////////////////////////////////////////////////////////////////
+          ////////////////expected start/////////////////////////////////////
           if(count<threshold)
           {
-          
-           board.getMeasurement(reading);
+           // start counter for threshold purpose//
            ++count;
+           //store sample in variable//
+           board.getMeasurement(sensor_value);
+           /* prevent suspending */
+           modemCanSuspend = false;
+           // Add the measurement to the message store.
+           interface->init();
+           watchdog.kick();
+           store.add(sensor_value);
            ThisThread::sleep_for(TIMEOUT_MS / 10);
           }
           else
           {
            NVIC_SystemReset();
-           memset(reading, 0x00, sizeof(reading));
+           memset(sensor_value, 0x00, sizeof(uint32_t));
            count=0;
           }		
-          ///////////////////expected end////////////////////////////////////////////////////////////////////////////
-      watchdog.kick();
-
-      /* prevent suspending */
-      modemCanSuspend = false;
-
-      // Add the measurement to the message store.
-      interface->init();
-      watchdog.kick();
-
+          ///////////////////expected end/////////////////////////////////
+       watchdog.kick();
       /* check waiting suspend */
       if(suspendRequired)
       {
         suspendSystem();
       }
-
-      store.add(reading);
       if (store.DoPostReadings())
       {
         watchdog.kick();
