@@ -836,13 +836,7 @@ int main(void)
            interface->init();
            watchdog.kick();
             struct datapacket information;
-            information.moisture=reading;
-            information.temp=reading;
-            information.light=reading;
-            information.battery=reading;
-            information.salinity=reading;
-            information.currentTime=reading;
-            information.airp=reading;
+           information=reading;
            store.add(information.airp);                    //for sensor 1
            store.add(information.currentTime);             //for sensor 2
            store.add(information.salinity);                //for sensor 3
