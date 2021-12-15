@@ -814,25 +814,41 @@ int main(void)
       if (network.connect(connection_timeout))
         {
           watchdog.kick();
-          ////////////////expected start/////////////////////////////////////
+////////////////expected start/////////////////////////////////////
           if(check<threshold)
           {
            // start counter for threshold purpose//
            ++check;
-           //store sample in variable//
-           board.getMeasurement(sensor_value);
+           board.getMeasurement(reading);
            /* prevent suspending */
            modemCanSuspend = false;
            // Add the measurement to the message store.
            interface->init();
            watchdog.kick();
-           store.add(sensor_value);
+           uint8_t temp=0xFF;
+           uint8_t var1,var2,var3,var3,var4,var5,var6,var7,var8;
+           var1=( uint8_t )(reading&temp);
+           var2=( uint8_t )(reading>>8&temp);
+           var3=( uint8_t )(reading>>8&temp);
+           var4=( uint8_t )(reading>>8&temp);
+           var5=( uint8_t )(reading>>8&temp);
+           var6=( uint8_t )(reading>>8&temp);
+           var7=( uint8_t )(reading>>8&temp);
+           var8=( uint8_t )(reading>>8&temp);
+           store.add(var1);//for sensor 1
+           store.add(var2);//for sensor 2
+           store.add(var3);//for sensor 3
+           store.add(var4);//for sensor 4
+           store.add(var5);//for sensor 5
+           store.add(var6);//for sensor 6
+           store.add(var7);//for sensor 7
+           store.add(var8);//for sensor 8
            ThisThread::sleep_for(TIMEOUT_MS / 10);
           }
           else
           {
            NVIC_SystemReset();
-           memset(sensor_value, 0x00, sizeof(uint32_t));
+           //memset(reading, 0x00, sizeof(reading));
            check=0;
           }		
           ///////////////////expected end/////////////////////////////////
