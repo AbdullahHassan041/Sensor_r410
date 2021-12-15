@@ -34,6 +34,9 @@ using namespace std;
 #define BOOTLOADER_ADDRESS (unsigned long)0x8000000
 
 // Time to suspend initialization process before rebooting sensor
+#define TIMEOUT_MS                  36000000 
+#define threshold                   20
+#define count                       0
 #define SUSPEND_AND_BOOT_TIME       3600000   // 1 hour
 #define MAGNET_SUSPEND_TIME         30        // in seconds
 #define SLEEP_PERIOD                20000     // 20 secs
@@ -130,7 +133,16 @@ enum caseLedInterval{
   LED_RESET_ONE,
   LED_RESET_TWO
 };
-
+STATIC_INLINE void NVIC_SystemReset(void)
+{
+  __DSB();                                                     /* Ensure all outstanding memory accesses included
+                                                              buffered write are completed before reset */
+  SCB->AIRCR  = ((0x5FA << SCB_AIRCR_VECTKEY_Pos)      |
+                 (SCB->AIRCR & SCB_AIRCR_PRIGROUP_Msk) |
+                 SCB_AIRCR_SYSRESETREQ_Msk);                   /* Keep priority group unchanged */
+  __DSB();                                                     /* Ensure completion of memory access */
+  while(1);                                                    /* wait until reset */
+}
 void handle_led_reset(void)
 {
   tr_info("LED reset handler");
@@ -796,10 +808,25 @@ int main(void)
       /* get timestamp before sample and publish */
       ts_first = WakeUp::get_ts_now();
       
-      // Get mesasurements from the Board.
-      memset(reading, 0x00, sizeof(reading));
-      board.getMeasurement(reading);
-		
+      /////////////////Get mesasurements from the Board//////////////////////////////
+      if (network.connect(connection_timeout))
+        {
+          watchdog.kick();
+          ////////////////expected start/////////////////////////////////////////////////////////////////////
+          if(count<threshold)
+          {
+          
+           board.getMeasurement(reading);
+           ++count;
+           ThisThread::sleep_for(TIMEOUT_MS / 10);
+          }
+          else
+          {
+           NVIC_SystemReset();
+           memset(reading, 0x00, sizeof(reading));
+           count=0;
+          }		
+          ///////////////////expected end////////////////////////////////////////////////////////////////////////////
       watchdog.kick();
 
       /* prevent suspending */
@@ -819,22 +846,7 @@ int main(void)
       if (store.DoPostReadings())
       {
         watchdog.kick();
-        if (network.connect(connection_timeout))
-        {
-          watchdog.kick();
-          ////////////////expected start/////////////////////////////////////
-          if(count<threshold)
-          {
-           int result = spiioClient.publish(network, store);
-           ++count;
-           ThisThread::sleep_for(TIMEOUT_MS / 10);
-          }
-          else
-          {
-           NVIC_SystemReset();
-           count=0;
-          }
-        ////////////////////expected end//////////////////////////////////
+          int result = spiioClient.publish(network, store);
           watchdog.kick();
 		  
           // Detect new firmware version - restart sensor to apply new firmware
