@@ -52,12 +52,13 @@ void SPIIO::SpiioBoard::sensorPwrPin(bool power_pin)
   }
 }
 
-void SPIIO::SpiioBoard::getMeasurement(datapacket information)
+void SPIIO::SpiioBoard::getMeasurement(datapacket *information)
 {
   gpio_t gpio; //Mearsure the battery need this line
   gpio_init_out_ex(&gpio, EN_3V6_UBLOX_PIN, 1);  //Mearsure the battery need this line
   wait_ms(50);
   float battery = _get_battery();
+  information.battery=battery;
   gpio_init_out_ex(&gpio, EN_3V6_UBLOX_PIN, 0);  //Mearsure the battery need this line
   
   en_sensor.write(1);
@@ -71,14 +72,19 @@ void SPIIO::SpiioBoard::getMeasurement(datapacket information)
   wait(3.0);
 
   float moisture= _get_moisture();
+  information.moisture=moisture;
   mypwm.write(0); 
   wait_ms(10);
   float temp = _get_temp();
+  information.temp = temp;
   float light = _get_light(); 
+  information.light = light;
   float salinity = _get_alternating_salinity();
+   information.salinity = salinity;
   time_t currentTime = _get_time();
+   information.currentTime = currentTime;
   float airp = 0; //_get_pressure();
-  
+   information.airp = airp;
   //sprintf(buffer, "[%4.2f,%4.2f,%4.2f,%4.2f,%4.2f,%li,%4.2f]", moisture, temp, light, battery, salinity, currentTime, airp);
  
   en_sensor.write(0);
