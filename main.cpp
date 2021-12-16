@@ -22,15 +22,16 @@
 #include "spiioClient/SpiioClient.h"
 #include "spiioNetwork/spiioNetwork.h"
 #include "mbed.h"
+#include "math.h"
 #ifdef SPIIO_SENSOR_SPIFLASH_FT25LX04
 #include "spiioBoard/SPIFBlockDevice.h"
 #endif
 #include "UbloxCellularHttp.h"
-
 #include "mbed_trace.h"
 #define TRACE_GROUP "SPIIO"
-/////////////////////////expected start////////////////////////////////
-struct datapacket
+using namespace std;
+#define BOOTLOADER_ADDRESS (unsigned long)0x8000000
+typedef struct
 {
   float   airp                :32;
   time_t  currentTime         :64;
@@ -38,12 +39,8 @@ struct datapacket
   float   battery             :32;
   float   light               :32;
   float   temp                :32;
-  float   moisture            :32;
-};
-//////////////////////////expected end/////////////////////////////////////
-using namespace std;
-#define BOOTLOADER_ADDRESS (unsigned long)0x8000000
-
+ float   moisture            :32;
+} datapacket;
 // Time to suspend initialization process before rebooting sensor
 #define TIMEOUT_MS                  36000000  
 #define threshold                   20
@@ -424,6 +421,7 @@ string get_reset_reason(uint8_t reason_rst)
 //New PCB VC2 New moisture board
 int main(void)
 {
+  datapacket information;
   lowPower.powerUp();
 
   mbed_trace_init();
@@ -829,14 +827,12 @@ int main(void)
           {
            // start counter for threshold purpose//
            ++check;
-           board.getMeasurement(reading);
+           board.getMeasurement(information);
            /* prevent suspending */
            modemCanSuspend = false;
            // Add the measurement to the message store.
-           interface->init();
+           interface->init(in);
            watchdog.kick();
-            struct datapacket information;
-           information=reading;
            store.add(information.airp);                    //for sensor 1
            store.add(information.currentTime);             //for sensor 2
            store.add(information.salinity);                //for sensor 3
