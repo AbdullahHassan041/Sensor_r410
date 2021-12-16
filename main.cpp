@@ -22,7 +22,6 @@
 #include "spiioClient/SpiioClient.h"
 #include "spiioNetwork/spiioNetwork.h"
 #include "mbed.h"
-#include "math.h"
 #ifdef SPIIO_SENSOR_SPIFLASH_FT25LX04
 #include "spiioBoard/SPIFBlockDevice.h"
 #endif
@@ -39,7 +38,7 @@ typedef struct
   float   battery             :32;
   float   light               :32;
   float   temp                :32;
- float   moisture            :32;
+	float   moisture            :32;
 } datapacket;
 // Time to suspend initialization process before rebooting sensor
 #define TIMEOUT_MS                  36000000  
@@ -827,11 +826,12 @@ int main(void)
           {
            // start counter for threshold purpose//
            ++check;
+           datapacket *information;
            board.getMeasurement(information);
            /* prevent suspending */
            modemCanSuspend = false;
            // Add the measurement to the message store.
-           interface->init(in);
+           interface->init();
            watchdog.kick();
            store.add(information.airp);                    //for sensor 1
            store.add(information.currentTime);             //for sensor 2
