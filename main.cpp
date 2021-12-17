@@ -811,22 +811,20 @@ int main(void)
            ++check;
            datapacket *information;
            board.getMeasurement(information);
-           //get_Measurement(information);
            /* prevent suspending */
            modemCanSuspend = false;
            // Add the measurement to the message store.
            interface->init();
            watchdog.kick();
-           extern float battery;
-           /*
-           store.add(information.airp);                    //for sensor 1
-           store.add(information.currentTime);             /SSSSS/for sensor 2
-           store.add(information.salinity);                //for sensor 3
-           store.add(battery);                 //for sensor 4
-           store.add(information.light);                   //for sensor 5
-           store.add(information.temp);                    //for sensor 6
-           store.add(information.moisture);                //for sensor 7
-           */
+           
+           store.add((char*)information->airp);                    //for sensor 1
+           store.add((char*)information->currentTime);             //for sensor 2
+           store.add((char*)information->salinity);                //for sensor 3
+           store.add((char*)information->battery);                 //for sensor 4
+           store.add((char*)information->light);                   //for sensor 5
+           store.add((char*)information->temp);                    //for sensor 6
+           store.add((char*)information->moisture);                //for sensor 7
+           
            sleepInterval % (TIMEOUT_MS);
           }
           else
