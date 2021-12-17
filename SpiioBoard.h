@@ -7,133 +7,62 @@
 * Contributors:
 *    Jens-Ole Graulund - initial API and implementation
 *******************************************************************************/
+#ifndef _SPIIOBOARD_H_
+#define _SPIIOBOARD_H_
 #include "mbed.h"
-#include "SpiioBoard.h"
-
-#include "PwmOut_advanced.h"
-
-#include "mbed_trace.h"
-#define TRACE_GROUP "SPIIO"
-DigitalOut en_sensor(EN_SENSOR_PIN, 0);
-DigitalOut en_salinity_1(SALINITY_V_PIN1, 0);
-DigitalOut en_salinity_2(SALINITY_V_PIN2, 0);
-
-void SPIIO::SpiioBoard::sensorSalinityPower(salinityPwr_t pwr)
+typedef struct
 {
-  if (pwr == s_positive)
-  {
-    //tr_debug("PIN39 GND, PIN40 1.8V");
-    en_salinity_1.write(0);
-    en_salinity_2.write(1);
-  }
-  else if (pwr == s_negative)
-  {
-    //tr_debug("PIN39 1.8V, PIN40 GND");
-    en_salinity_1.write(1);
-    en_salinity_2.write(0);
-  }
-  else
-  {
-    //tr_debug("PIN39 GND, PIN40 GND");
-    en_salinity_1.write(0);
-    en_salinity_2.write(0);
-  }
-}
+  uint64_t    airp                :32;
+  time_t      currentTime         :64;
+  uint64_t    salinity            :32;
+  uint64_t    battery             :32;
+  uint64_t    light               :32;
+  uint64_t    temp                :32;
+  uint64_t    moisture            :32;
+} datapacket;
 
-void SPIIO::SpiioBoard::sensorPwrPin(bool power_pin)
+//int get_Measurement(datapacket *information);
+typedef enum
 {
-  if (power_pin)
-  {
-    en_sensor.write(1);
-  }
-  else
-  {
-    en_sensor.write(0);
-  }
-}
-
-void SPIIO::SpiioBoard::getMeasurement(datapacket *information)
+  s_battery = 0,
+  s_temperature,
+  s_llight,
+  s_hlight,
+  s_airp,
+  s_salinity_air,
+  s_salinity_water,
+  s_moisture_air,
+  s_moisture_water,
+} sensor_type;
+typedef enum
 {
-  gpio_t gpio; //Mearsure the battery need this line
-  gpio_init_out_ex(&gpio, EN_3V6_UBLOX_PIN, 1);  //Mearsure the battery need this line
-  wait_ms(50);
-  float battery = _get_battery();
-  information.battery=battery;
-  gpio_init_out_ex(&gpio, EN_3V6_UBLOX_PIN, 0);  //Mearsure the battery need this line
-  
-  en_sensor.write(1);
-  wait(1.0);
-  
-  // PwmOut mypwm(PWM_OUT);
-  PwmOutAdvanced mypwm(PWM_OUT);
-  mypwm.period_cycle(4);
-  mypwm.write(0.5);
-  
-  wait(3.0);
+  s_off = 0,
+  s_positive,
+  s_negative
+} salinityPwr_t;
 
-  float moisture= _get_moisture();
-  information.moisture=moisture;
-  mypwm.write(0); 
-  wait_ms(10);
-  float temp = _get_temp();
-  information.temp = temp;
-  float light = _get_light(); 
-  information.light = light;
-  float salinity = _get_alternating_salinity();
-   information.salinity = salinity;
-  time_t currentTime = _get_time();
-   information.currentTime = currentTime;
-  float airp = 0; //_get_pressure();
-   information.airp = airp;
-  //sprintf(buffer, "[%4.2f,%4.2f,%4.2f,%4.2f,%4.2f,%li,%4.2f]", moisture, temp, light, battery, salinity, currentTime, airp);
- 
-  en_sensor.write(0);
+namespace SPIIO
+{
+class SpiioBoard
+{
+public:
+  void sensorSalinityPower(salinityPwr_t pwr);
+  void sensorPwrPin(bool power_pin);
+  void getMeasurement(datapacket *information);
+  float getBlessData(sensor_type sensor);
 
-  return;
+//private:
+  float _get_moisture();
+  float _get_light();
+  float _get_battery();
+  float _get_temp();
+  float _get_pressure();
+  float _get_salinity();
+  float _get_salinity_positive();
+  float _get_salinity_negative();
+  float _get_alternating_salinity();
+  time_t _get_time();
 };
+} // namespace SPIIO
 
-float SPIIO::SpiioBoard::getBlessData(sensor_type sensor)
-{
-  float sen_read = 0;
-
-  gpio_t gpio;
-  //PwmOut mypwm(PWM_OUT);
-  PwmOutAdvanced mypwm(PWM_OUT);
-  mypwm.period_cycle(4);
-  mypwm.write(0.5);
-  en_sensor.write(1);
-  gpio_init_out_ex(&gpio, EN_3V6_UBLOX_PIN, 1);
-  wait(2.0);
-
-  switch (sensor)
-  {
-  case s_battery:
-    sen_read = _get_battery();
-    break;
-  case s_temperature:
-    sen_read = _get_temp();
-    break;
-  case s_llight:
-  case s_hlight:
-    sen_read = _get_light();
-    break;
-  case s_airp:
-    //sen_read = _get_pressure();
-    break;
-  case s_salinity_air:
-  case s_salinity_water:
-    sen_read = _get_alternating_salinity();
-    break;
-  case s_moisture_air:
-  case s_moisture_water:
-    sen_read = _get_moisture();
-    break;
-  default:
-    break;
-  }
-
-  gpio_init_out_ex(&gpio, EN_3V6_UBLOX_PIN, 0);
-  en_sensor.write(0);
-
-  return sen_read;
-};
+#endif // _SPIIOBOARD_H_
