@@ -21,29 +21,22 @@
 #include "spiioBoard/low_power.h"
 #include "spiioClient/SpiioClient.h"
 #include "spiioNetwork/spiioNetwork.h"
+#include "UbloxCellularHttp.h"
+#include <StoreConfig.h>
+#include "mbed_trace.h"
 #include "mbed.h"
 #ifdef SPIIO_SENSOR_SPIFLASH_FT25LX04
 #include "spiioBoard/SPIFBlockDevice.h"
 #endif
-#include "UbloxCellularHttp.h"
-#include "mbed_trace.h"
+
 #define TRACE_GROUP "SPIIO"
 using namespace std;
 #define BOOTLOADER_ADDRESS (unsigned long)0x8000000
-typedef struct
-{
-  float   airp                :32;
-  time_t  currentTime         :64;
-  float   salinity            :32;
-  float   battery             :32;
-  float   light               :32;
-  float   temp                :32;
-	float   moisture            :32;
-} datapacket;
+
+
 // Time to suspend initialization process before rebooting sensor
-#define TIMEOUT_MS                  36000000  
+#define TIMEOUT_MS                  3600000  
 #define threshold                   20
-#define check                       0
 #define SUSPEND_AND_BOOT_TIME       3600000   // 1 hour
 #define MAGNET_SUSPEND_TIME         30        // in seconds
 #define SLEEP_PERIOD                20000     // 20 secs
@@ -64,7 +57,7 @@ static int suspend_count_days   = 7;
 static int suspend_count_hours  = 6;
 
 bool overrided_sleep_logic = false;
-
+//int get_Measurement(information);
 enum caseSleepInterval{
   SLEEP_CYCLE_ONE,
   SLEEP_CYCLE_TWO
@@ -140,16 +133,6 @@ enum caseLedInterval{
   LED_RESET_ONE,
   LED_RESET_TWO
 };
-STATIC_INLINE void NVIC_SystemReset(void)
-{
-  __DSB();                                                     /* Ensure all outstanding memory accesses included
-                                                              buffered write are completed before reset */
-  SCB->AIRCR  = ((0x5FA << SCB_AIRCR_VECTKEY_Pos)      |
-                 (SCB->AIRCR & SCB_AIRCR_PRIGROUP_Msk) |
-                 SCB_AIRCR_SYSRESETREQ_Msk);                   /* Keep priority group unchanged */
-  __DSB();                                                     /* Ensure completion of memory access */
-  while(1);                                                    /* wait until reset */
-}
 void handle_led_reset(void)
 {
   tr_info("LED reset handler");
@@ -169,7 +152,7 @@ void handle_led_reset(void)
         pwr_det.rise(&pwr_magnet_place_dummy);
         pwr_det.fall(&pwr_magnet_detach_dummy);
 
-        for(int count = 0; count < time_counter; count++)
+        for(int count = 0 ; count < time_counter ; count++)
         {
           watchdog.kick();
           LED.on(RED);
@@ -420,7 +403,6 @@ string get_reset_reason(uint8_t reason_rst)
 //New PCB VC2 New moisture board
 int main(void)
 {
-  datapacket information;
   lowPower.powerUp();
 
   mbed_trace_init();
@@ -491,7 +473,7 @@ int main(void)
 
       interface->set_functionality_mode(UbloxCellularBase::FUNC_FULL);
 
-      interface->clear_sim_FPLMN();
+     // interface->clear_sim_FPLMN();
 
       // If its first run or magnet is just removed
       if ((reset == RESET_REASON_POWER_ON) || (reset == RESET_REASON_PIN_RESET))
@@ -542,7 +524,7 @@ int main(void)
       {
         tr_debug("Error - Power Save Mode was not disabled");
       }
-
+/*
       // Disable eDRX Mode (PSM)
       if (interface->set_eDRX(0))
       {
@@ -552,7 +534,7 @@ int main(void)
       {
         tr_debug("Error - eDRX was not disabled");
       }
-
+*/
       watchdog.kick();
     
       // Reboot the modem for RAT, bandmask and PSM to take effect
@@ -822,25 +804,30 @@ int main(void)
         {
           watchdog.kick();
           ////////////////expected start/////////////////////////////////////
+          int check =0;
           if(check<threshold)
           {
            // start counter for threshold purpose//
            ++check;
            datapacket *information;
            board.getMeasurement(information);
+           //get_Measurement(information);
            /* prevent suspending */
            modemCanSuspend = false;
            // Add the measurement to the message store.
            interface->init();
            watchdog.kick();
+           extern float battery;
+           /*
            store.add(information.airp);                    //for sensor 1
-           store.add(information.currentTime);             //for sensor 2
+           store.add(information.currentTime);             /SSSSS/for sensor 2
            store.add(information.salinity);                //for sensor 3
-           store.add(information.battery);                 //for sensor 4
+           store.add(battery);                 //for sensor 4
            store.add(information.light);                   //for sensor 5
            store.add(information.temp);                    //for sensor 6
            store.add(information.moisture);                //for sensor 7
-           ThisThread::sleep_for(TIMEOUT_MS / 10);
+           */
+           sleepInterval % (TIMEOUT_MS);
           }
           else
           {
